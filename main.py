@@ -76,7 +76,7 @@ def main(fname, set, procs):
     if set == 'julia':
         mapp = utils.julia_cmap_parallel(iterate, net, procs)
     elif set == 'mbrot':
-        mapp = utils.mbrot_cmap_parallel(burning_ship, net, procs)
+        mapp = utils.mbrot_cmap_parallel(iterate_z, net, procs)
         mapp = np.transpose(mapp)
     else:
         print(f"Error: unsupported set {set}")
