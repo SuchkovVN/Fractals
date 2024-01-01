@@ -102,7 +102,6 @@ def main(cfgfname, fname, pr):
         for line in f:
             params.append(line)
             
-        
     
     
     

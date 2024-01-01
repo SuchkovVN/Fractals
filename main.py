@@ -39,6 +39,21 @@ def iterate_z(cs):
     
     return res
 
+def burning_ship(cs):
+    res = np.zeros(cs.shape[0])
+    
+    i = 0
+    for c in cs:
+        z = c
+        k = 0
+        while abs(z) <= 2 and k <= maxIter:
+            z = (complex(abs(z.real), abs(z.imag)))**2 + c
+            k += 1
+        res[i] = k / maxIter
+        i += 1
+    
+    return res
+
 def main(fname, set, procs):
     cfg = []
     with open(fname) as f:
@@ -61,7 +76,7 @@ def main(fname, set, procs):
     if set == 'julia':
         mapp = utils.julia_cmap_parallel(iterate, net, procs)
     elif set == 'mbrot':
-        mapp = utils.mbrot_cmap_parallel(iterate_z, net, procs)
+        mapp = utils.mbrot_cmap_parallel(burning_ship, net, procs)
         mapp = np.transpose(mapp)
     else:
         print(f"Error: unsupported set {set}")
