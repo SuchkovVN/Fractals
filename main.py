@@ -7,7 +7,7 @@ import matplotlib.cm as cm
 import numpy as np
 
 coef = (-0.3 -0.2j)
-maxIter = int(sys.argv[3])
+maxIter = 500
 radius = 2.5
 def iterate(zs):
     res = np.zeros(zs.shape[0])
@@ -39,15 +39,22 @@ def iterate_z(cs):
     
     return res
 
-def main(width, height, procs):
-    xmin = -1.5
-    xmax = 0.5
-    ymin = -1.1
-    ymax = 1.1
+def main(fname, set, procs):
+    cfg = []
+    with open(fname) as f:
+        for line in f:
+            cfg.append(float(line))
+            
+    print(cfg)
+    xmin = cfg[0]
+    xmax = cfg[1]
+    ymin = cfg[2]
+    ymax = cfg[3]
     xwidth = xmax - xmin
     yheight = ymax - ymin
-    im_width = width
-    im_height = height
+    maxIter = int(cfg[4])
+    im_width = int(cfg[5])
+    im_height = int(cfg[6])
     net = (xmin, ymin, xwidth / im_width, yheight / im_height, im_width, im_height)
         
     start = time.clock_gettime(0)
@@ -55,12 +62,19 @@ def main(width, height, procs):
     mbrot = utils.mbrot_cmap_parallel(iterate_z, net, procs)
     stop = time.clock_gettime(0) - start
     print(f"Elapsed time: {stop}s")
+    
+    if set == 'julia':
+        mapp = utils.julia_cmap_parallel(iterate, net, procs)
+    elif set == 'mbrot':
+        mapp = utils.mbrot_cmap_parallel(iterate_z, net, procs)
+        mapp = np.transpose(mapp)
+    else:
+        print(f"Error: unsupported set {set}")
+        return
         
     fig, ax = plt.subplots()
-    mbrot = np.transpose(mbrot)
-    # twilight_shifted for julia's set
-    plt.imsave(fname="mbrot2.png", arr=mbrot, cmap="flag_r", vmin=0, vmax=2.25)
-    plt.imshow(mbrot, cmap="flag_r", vmin=0, vmax=2.25)
+    plt.imsave(fname=f"images/{set}_{im_width}x{im_height}s.png", arr=mapp, cmap="flag_r", vmin=0, vmax=2.25)
+    plt.imshow(mapp, cmap="flag_r", vmin=0, vmax=2.25)
     
     xtick_labels = np.linspace(xmin, xmax, int(xwidth * 2))
     ax.set_xticks([(x-xmin) / xwidth * im_width for x in xtick_labels])
@@ -73,4 +87,4 @@ def main(width, height, procs):
 
 
 if __name__ == "__main__":
-    main(int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[4]))
+    main(sys.argv[1], sys.argv[2], int(sys.argv[3]))
