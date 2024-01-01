@@ -58,11 +58,6 @@ def main(fname, set, procs):
     net = (xmin, ymin, xwidth / im_width, yheight / im_height, im_width, im_height)
         
     start = time.clock_gettime(0)
-    # jset = utils.cmap_parallel(iterate, net, maxIter, coef, 2., 8)
-    mbrot = utils.mbrot_cmap_parallel(iterate_z, net, procs)
-    stop = time.clock_gettime(0) - start
-    print(f"Elapsed time: {stop}s")
-    
     if set == 'julia':
         mapp = utils.julia_cmap_parallel(iterate, net, procs)
     elif set == 'mbrot':
@@ -71,6 +66,8 @@ def main(fname, set, procs):
     else:
         print(f"Error: unsupported set {set}")
         return
+    stop = time.clock_gettime(0) - start
+    print(f"Elapsed time: {stop}s")
         
     fig, ax = plt.subplots()
     plt.imsave(fname=f"images/{set}_{im_width}x{im_height}s.png", arr=mapp, cmap="flag_r", vmin=0, vmax=2.25)
