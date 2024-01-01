@@ -1,4 +1,5 @@
 import utils
+import sys
 import multiprocessing
 import time
 import matplotlib.pyplot as plt
@@ -38,7 +39,7 @@ def iterate_z(cs):
     
     return res
 
-def main():
+def main(procs):
     xmin = -1.5
     xmax = 0.5
     ymin = -1.1
@@ -51,7 +52,7 @@ def main():
         
     start = time.clock_gettime(0)
     # jset = utils.cmap_parallel(iterate, net, maxIter, coef, 2., 8)
-    mbrot = utils.mbrot_cmap_parallel(iterate_z, net, 8)
+    mbrot = utils.mbrot_cmap_parallel(iterate_z, net, procs)
     stop = time.clock_gettime(0) - start
     print(f"Elapsed time: {stop}s")
         
@@ -72,4 +73,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(int(sys.argv[1]))
