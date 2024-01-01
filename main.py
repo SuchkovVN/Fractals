@@ -39,15 +39,15 @@ def iterate_z(cs):
     
     return res
 
-def main(procs):
+def main(width, height, procs):
     xmin = -1.5
     xmax = 0.5
     ymin = -1.1
     ymax = 1.1
     xwidth = xmax - xmin
     yheight = ymax - ymin
-    im_width = 512
-    im_height = 512
+    im_width = width
+    im_height = height
     net = (xmin, ymin, xwidth / im_width, yheight / im_height, im_width, im_height)
         
     start = time.clock_gettime(0)
@@ -73,4 +73,4 @@ def main(procs):
 
 
 if __name__ == "__main__":
-    main(int(sys.argv[1]))
+    main(int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]))
