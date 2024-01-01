@@ -7,7 +7,7 @@ import matplotlib.cm as cm
 import numpy as np
 
 coef = (-0.3 -0.2j)
-maxIter = 900
+maxIter = int(sys.argv[3])
 radius = 2.5
 def iterate(zs):
     res = np.zeros(zs.shape[0])
@@ -73,4 +73,4 @@ def main(width, height, procs):
 
 
 if __name__ == "__main__":
-    main(int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]))
+    main(int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[4]))
