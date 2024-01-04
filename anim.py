@@ -43,7 +43,7 @@ def julia_set_anim(xlims, ylims, im_dims, maxIter, coefs, N, fps, nSeconds):
 def julia_set_anim_gpu(xmin, xmax, ymin, ymax, im_w, im_h, maxIter, coefs, N, fps, nSeconds):
     mapp = np.zeros((im_w, im_h)) 
 
-    dpi = 100
+    dpi = 150
 
     xlims = (xmin, xmax)
     ylims = (ymin, ymax)
@@ -60,7 +60,8 @@ def julia_set_anim_gpu(xmin, xmax, ymin, ymax, im_w, im_h, maxIter, coefs, N, fp
     ax = plt.Axes(fig, [0., 0., 1., 1.])
     ax.set_axis_off()
     fig.add_axes(ax)
-    image = plt.imshow(mapp, cmap="flag_r", vmin=0, vmax=2.25, aspect='auto')
+    # image = plt.imshow(mapp, cmap="flag_r", vmin=0, vmax=2.25, aspect='auto')
+    image = plt.imshow(mapp, cmap="twilight_shifted", vmin=0, vmax=1, aspect='auto')
 
     # initialization function: plot the background of each frame
     def init():
