@@ -12,7 +12,6 @@ from anim import julia_set_anim, julia_set_anim_gpu
 
 mpl.rcParams['animation.ffmpeg_path'] = r'win\\ffmpeg.exe'
 
-
 coef = (-0.3 -0.2j)
 maxIter = 500
 radius = 2.5

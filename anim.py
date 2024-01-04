@@ -60,26 +60,31 @@ def julia_set_anim_gpu(xmin, xmax, ymin, ymax, im_w, im_h, maxIter, coefs, N, fp
     ax = plt.Axes(fig, [0., 0., 1., 1.])
     ax.set_axis_off()
     fig.add_axes(ax)
-    # image = plt.imshow(mapp, cmap="flag_r", vmin=0, vmax=2.25, aspect='auto')
-    image = plt.imshow(mapp, cmap="twilight_shifted", vmin=0, vmax=1, aspect='auto')
+    image = plt.imshow(mapp, cmap="flag_r", vmin=0, vmax=2.25, aspect='auto')
+    # image = plt.imshow(mapp, cmap="twilight_shifted", vmin=0, vmax=1, aspect='auto')
 
     # initialization function: plot the background of each frame
     def init():
         return [image]
 
     # animation function.  This is called sequentially
-    def animate(i):
+    def animate(i, ttime):
+        loc_time = time.monotonic()
         core.julia_set_f_gpu[blockspergrid, threadsperblock](mapp, xmin, xmax, ymin, ymax, im_w, im_h, maxIter, coefs[i, 0], coefs[i, 1])
+        ttime[0] += time.monotonic() - loc_time
         image.set_array(mapp)
         return [image]
 
+    total_gpu_time = [0.]
     anim = animation.FuncAnimation(
                                fig, 
-                               animate, 
+                               animate,
+                               fargs=(total_gpu_time,),
                                frames = nSeconds * fps,
                                interval = 1000 / fps, # in ms
                                )
 
-
     FFwriter = animation.FFMpegWriter(fps=fps)
     anim.save(f"images/julia_{im_dims[0]}s_gpu_set.mp4", writer=FFwriter)
+
+    print(f"Total GPU time: {total_gpu_time[0]}s\n")
