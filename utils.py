@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import multiprocessing
 import time
+import math
+from numba import njit, prange
 
 # net = (x_start, y_start, x_step, y_step, x_dim, y_dim)
 
@@ -100,3 +102,30 @@ def mbrot_cmap_parallel(rhs, net, procs):
             j += 1
 
     return map
+
+@njit(parallel=True)
+def generate_rot_seq(r, tlims, n):
+    res = np.zeros((n, 2))
+    step = (tlims[1] - tlims[0]) / n
+
+    for i in prange(n):
+        t = tlims[0] + i * step
+        res[i, 0] = r * math.cos(t)
+        res[i, 1] = r * math.sin(t)
+
+    return res
+
+@njit(parallel=True)
+def generate_spiral_seq(r_start, tlims, n, sp):
+    res = np.zeros((n, 2))
+    step = (tlims[1] - tlims[0]) / n
+
+    for i in prange(n):
+        t = tlims[0] + i * step
+        r = r_start * math.exp(-sp * t)
+        res[i, 0] = r * math.cos(t)
+        res[i, 1] = r * math.sin(t)
+
+    return res
+
+

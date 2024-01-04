@@ -5,108 +5,80 @@ import time
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import numpy as np
-
+import core
+import math
+from numba import njit, prange
 from matplotlib import animation, rc
 
-coef = (-0.3 -0.2j)
-coefs = []
-maxIter = 500
-radius = 2.5
-def iterate(zs):
-    res = np.zeros(zs.shape[0])
-    
-    i = 0
-    for zp in zs:
-        z = zp
-        k = 0
-        while abs(z) <= radius and k <= maxIter:
-            z = z**2 + coef
-            k += 1
-        res[i] = k / maxIter
-        i += 1
-    
-    return res
+def julia_set_anim(xlims, ylims, im_dims, maxIter, coefs, N, fps, nSeconds):
+    mapp = core.julia_set_f(xlims, ylims, im_dims, maxIter, coefs[0, 0], coefs[0, 1])
 
-def iterate_z(cs):
-    res = np.zeros(cs.shape[0])
-    
-    i = 0
-    for c in cs:
-        z = c
-        k = 0
-        while abs(z) <= 2 and k <= maxIter:
-            z = z**2 + c
-            k += 1
-        res[i] = k / maxIter
-        i += 1
-    
-    return res
+    dpi = 100
 
-rc('animation', html='html5')
-# отображать анимацию в виде html5 video
+    fig = plt.figure(frameon=False)
+    fig.set_size_inches(im_dims[0] / dpi, im_dims[1] / dpi)
+    plt.axis('off')
+    image = plt.imshow(mapp, cmap="flag_r", vmin=0, vmax=2.25, aspect='auto')
 
-fig = plt.figure(figsize=(10, 10))
-max_frames = 200
+    # initialization function: plot the background of each frame
+    def init():
+        return [image]
 
-images = []
-# кэш картинок
+    # animation function.  This is called sequentially
+    def animate(i):
+        mapp = core.julia_set_f(xlims, ylims, im_dims, maxIter, coefs[i, 0], coefs[i, 1])
+        image.set_array(mapp)
+        return [image]
 
-def init():
-    return plt.gca()
+    anim = animation.FuncAnimation(
+                               fig, 
+                               animate, 
+                               frames = nSeconds * fps,
+                               interval = 1000 / fps, # in ms
+                               )
 
-net = ()
-procs = 1
+    FFwriter = animation.FFMpegWriter(fps=fps)
+    anim.save(f"images/julia_{im_dims[0]}s_set.mp4", writer=FFwriter)
 
-def animate_mbrot(i):
-    if i > max_frames // 2:
-        # фаза zoom out, можно достать картинку из кэша
+def julia_set_anim_gpu(xmin, xmax, ymin, ymax, im_w, im_h, maxIter, coefs, N, fps, nSeconds):
+    mapp = np.zeros((im_w, im_h)) 
 
-        plt.imshow(images[max_frames//2-i], cmap="flag_r", vmin=0, vmax=2.25)
-        return
-    
-    coef = coefs[i]
-    image = utils.julia_cmap_parallel(iterate_z, net, procs)
-    plt.imshow(image, cmap="flag_r", vmin=0, vmax=2.25)
-    images.append(image)
-    
-    # добавить картинку в кэш
-    return plt.gca()
+    dpi = 100
 
-def generate_coefs(start, stop, step):
-    res = []
-    
-    
+    xlims = (xmin, xmax)
+    ylims = (ymin, ymax)
+    im_dims = (im_w, im_h)
+
+    threadsperblock = (32, 32)
+    blockspergrid_x = math.ceil(mapp.shape[0] / threadsperblock[0])
+    blockspergrid_y = math.ceil(mapp.shape[1] / threadsperblock[1])
+    blockspergrid = (blockspergrid_x, blockspergrid_y)
+    core.julia_set_f_gpu[blockspergrid, threadsperblock](mapp, xmin, xmax, ymin, ymax, im_w, im_h, maxIter, coefs[0, 0], coefs[0, 1])
+
+    fig = plt.figure(frameon=False)
+    fig.set_size_inches(im_dims[0] / dpi, im_dims[1] / dpi)
+    ax = plt.Axes(fig, [0., 0., 1., 1.])
+    ax.set_axis_off()
+    fig.add_axes(ax)
+    image = plt.imshow(mapp, cmap="flag_r", vmin=0, vmax=2.25, aspect='auto')
+
+    # initialization function: plot the background of each frame
+    def init():
+        return [image]
+
+    # animation function.  This is called sequentially
+    def animate(i):
+        core.julia_set_f_gpu[blockspergrid, threadsperblock](mapp, xmin, xmax, ymin, ymax, im_w, im_h, maxIter, coefs[i, 0], coefs[i, 1])
+        image.set_array(mapp)
+        return [image]
+
+    anim = animation.FuncAnimation(
+                               fig, 
+                               animate, 
+                               frames = nSeconds * fps,
+                               interval = 1000 / fps, # in ms
+                               )
 
 
-def main(cfgfname, fname, pr):
-    cfg = []
-    with open(cfgfname) as f:
-        for line in f:
-            cfg.append(float(line))
-            
-    print(cfg)
-    xmin = cfg[0]
-    xmax = cfg[1]
-    ymin = cfg[2]
-    ymax = cfg[3]
-    xwidth = xmax - xmin
-    yheight = ymax - ymin
-    maxIter = int(cfg[4])
-    im_width = int(cfg[5])
-    im_height = int(cfg[6])
-    net = (xmin, ymin, xwidth / im_width, yheight / im_height, im_width, im_height)
-    procs = pr
-    
-    params = []
-    with open(fname) as f:
-        for line in f:
-            params.append(line)
-            
-    
-    
-    
-    max_frames = len(coefs)
-    animation.FuncAnimation(fig, animate_mbrot, init_func=init,
-                                frames=max_frames, interval=50)
-
-main(sys.argv[1], sys.argv[2], int(sys.argv[3]))
+    FFwriter = animation.FFMpegWriter(fps=fps)
+    anim.save(f"images/julia_{im_dims[0]}s_gpu_set.mp4", writer=FFwriter)
